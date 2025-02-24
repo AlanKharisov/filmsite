@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фильмы</title>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    position: relative;
+}
+
+.header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+}
+
+.header-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.header-button:hover {
+    background-color: #0056b3;
+}
+
+.add-movie-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+    margin-top: 60px; /* Оставляем место для верхней панели */
+}
+
+.add-movie-button {
+    border: 2px solid #000;
+    padding: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    min-width: 150px;
+    background: #f8f8f8;
+}
+
+.movie-form {
+    position: fixed; /* Это поведение предполагается? */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: none; /* Это должно быть включено, когда форма открыта */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.search-label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+}
+
+.search-label::after {
+    content: '\1F50D'; /* Лупа */
+    margin-left: 5px;
+}
+
+#searchInput {
+    display: none;
+    width: 200px;
+    padding: 5px;
+}
+
+.search-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.movie-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    display: none;
+    z-index: 1000;
+    width: 300px;
+    text-align: center;
+}
+
+.movie-modal button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.movie-modal button:hover {
+    background-color: #0056b3;
+}
+
+@media (max-width: 600px) {
+    .search-label {
+        font-size: 20px;
+        display: flex;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    #searchInput {
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 40px;
+        font-size: 18px;
+        padding: 5px;
+        border: none;
+        outline: none;
+        z-index: 1000;
+    }
+
+    .search-overlay.active {
+        display: block;
+        background: rgba(0, 0, 0, 0.3);
+    }
+}
+
+.edit-button,
+.back-button {
+    display: none; /* Скрываем кнопки по умолчанию */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.edit-button {
+    background-color: #007bff;
+    color: white;
+}
+
+.edit-button:hover {
+    background-color: #0056b3;
+}
+
+.save-button {
+    background-color: #28a745 !important; /* Зеленый цвет */
+}
+
+.back-button {
+    background-color: #6c757d;
+    color: white;
+}
+
+.back-button:hover {
+    background-color: #5a6268;
+}
+
+.movie-details {
+    display: block; /* Обычный блок */
+}
+
+.movie-form {
+    display: none; /* Форма редактирования скрыта */
+}
+
+/* Показать кнопку "Назад" при открытии формы */
+.movie-form.show .back-button {
+    display: block; /* Показывать кнопку "Назад", когда форма открыта */
+}
+    </style>
+</head>
+
+<body>
+    <!-- Верхняя панель с кнопками -->
+<div class="header-container">
+    <button class="header-button" onclick="openForm()">Добавить фильм</button>
+    <label class="header-button" onclick="toggleSearch()">Поиск</label>
+    <input type="text" id="searchInput" placeholder="Поиск фильма...">
+</div>
+
+<!-- Контейнер для фильмов -->
+<div class="add-movie-container" id="addMovieContainer"></div>
+
+<!-- Модальное окно для отображения информации о фильме -->
+<div class="movie-modal" id="movieModal" style="display: none;">
+    <div id="movieDetails" class="movie-details">
+        <h2 id="modalMovieName"></h2>
+        <p id="modalMovieGenre"></p>
+        <a id="modalMovieUrl" href="#" target="_blank">
+            <button>Смотреть фильм</button>
+        </a>
+    </div>
+
+    <!-- Форма редактирования (изначально скрыта) -->
+    <div class="movie-form" id="editMovieForm" style="display: none;">
+        <input type="text" id="editMovieName" placeholder="Название фильма"><br><br>
+        <input type="text" id="editMovieGenre" placeholder="Жанр фильма"><br><br>
+        <input type="url" id="editMovieUrl" placeholder="Ссылка на фильм"><br><br>
+        <button onclick="saveMovieChanges()">Сохранить</button>
+        <button onclick="cancelEdit()">Отмена</button>
+    </div>
+
+    <button id="editMovieButton" class="edit-button" onclick="toggleEditMode()" style="display: none;">Редактировать</button>
+    <button onclick="closeModal()">Закрыть</button>
+</div>
+
+<!-- Форма добавления фильма -->
+<div class="movie-form" id="formContainer" style="display: none;">
+    <input type="text" id="movieName" placeholder="Название фильма"><br><br>
+    <input type="text" id="movieGenre" placeholder="Жанр фильма"><br><br>
+    <input type="url" id="movieUrl" placeholder="Ссылка на фильм"><br><br>
+    
+    <!-- Кнопка "Назад" рядом с кнопкой "Добавить" -->
+    <button id="backButton" class="back-button" onclick="goBack()" 
+        style="margin-right: 10px;">Назад</button>
+    
+    <button onclick="submitMovie()">Добавить</button>
+</div>
+
+
+<!-- Оверлей для поиска -->
+<div class="search-overlay"></div>
+
+    <script>
+        // Функции для кнопок
+        function toggleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const overlay = document.querySelector('.search-overlay');
+
+            if (searchInput.style.display === 'block') {
+                searchInput.style.display = 'none';
+                overlay.classList.remove('active');
+            } else {
+                searchInput.style.display = 'block';
+                overlay.classList.add('active');
+                searchInput.focus();
+            }
+        }
+
+        // Закрытие поиска при клике вне поля ввода
+        document.addEventListener('click', function (event) {
+            const searchInput = document.getElementById('searchInput');
+            const overlay = document.querySelector('.search-overlay');
+            const searchLabel = document.querySelector('.header-button[onclick="toggleSearch()"]');
+
+            // Если клик вне поля поиска и кнопки поиска — закрываем поиск, но не скрываем найденные фильмы
+            if (event.target !== searchInput && event.target !== searchLabel) {
+                searchInput.style.display = 'none';
+                overlay.classList.remove('active');
+            }
+        });
+
+
+        function openForm() {
+            document.getElementById('formContainer').style.display = 'flex';
+        }
+
+        function submitMovie() {
+            const name = document.getElementById('movieName').value.trim();
+            const genre = document.getElementById('movieGenre').value.trim();
+            const url = document.getElementById('movieUrl').value.trim();
+
+            if (name && genre && url) {
+                const container = document.getElementById('addMovieContainer');
+                const newButton = document.createElement('button');
+                newButton.classList.add('add-movie-button');
+                newButton.textContent = name;
+                newButton.onclick = () => openMovieDetails(name, genre, url);
+                container.appendChild(newButton);
+
+                const movies = JSON.parse(localStorage.getItem('movies')) || [];
+                movies.push({ name, genre, url });
+                localStorage.setItem('movies', JSON.stringify(movies));
+
+                document.getElementById('formContainer').style.display = 'none';
+                document.getElementById('movieName').value = '';
+                document.getElementById('movieGenre').value = '';
+                document.getElementById('movieUrl').value = '';
+            } else {
+                alert('Пожалуйста, заполните все поля!');
+            }
+        }
+
+        // Функция для открытия деталей фильма
+        function openMovieDetails(name, genre, url) {
+            document.querySelector('.add-movie-container').style.display = 'none';
+            document.querySelector('.header-container').style.display = 'none';
+
+            document.getElementById('modalMovieName').textContent = name;
+            document.getElementById('modalMovieGenre').textContent = `Жанр: ${genre}`;
+            document.getElementById('modalMovieUrl').href = url;
+            document.getElementById('movieModal').style.display = 'block';
+        }
+
+        // Закрытие модального окна
+        function closeModal() {
+            document.getElementById('movieModal').style.display = 'none';
+            document.querySelector('.add-movie-container').style.display = 'flex';
+            document.querySelector('.header-container').style.display = 'flex';
+        }
+
+        // Функция поиска фильмов
+        function searchMovies() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const buttons = document.querySelectorAll('.add-movie-button');
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+
+            buttons.forEach(button => {
+                const movieName = button.textContent.trim().toLowerCase();
+                const movie = movies.find(m => m.name.trim().toLowerCase() === movieName);
+
+                if (movie && (movie.name.toLowerCase().includes(query) || movie.genre.toLowerCase().includes(query))) {
+                    button.style.display = 'block';
+                } else {
+                    button.style.display = 'none';
+                }
+            });
+        }
+
+        // Загрузка фильмов при старте страницы
+        window.onload = function () {
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+            const container = document.getElementById('addMovieContainer');
+
+            movies.forEach(movie => {
+                const newButton = document.createElement('button');
+                newButton.classList.add('add-movie-button');
+                newButton.textContent = movie.name;
+                newButton.onclick = () => openMovieDetails(movie.name, movie.genre, movie.url);
+                container.appendChild(newButton);
+            });
+
+            // Добавляем обработчик события для поиска
+            document.getElementById('searchInput').addEventListener('input', searchMovies);
+        };
+
+        document.querySelector('.search-overlay').addEventListener('click', function () {
+            const buttons = document.querySelectorAll('.add-movie-button');
+
+            // Найдём первый видимый фильм после поиска
+            for (let button of buttons) {
+                if (button.style.display !== 'none') {
+                    button.click();
+                    break;
+                }
+            }
+
+            // Закрываем поле поиска
+            document.getElementById('searchInput').style.display = 'none';
+            this.classList.remove('active');
+        });
+
+        let isSearchActive = false; // Флаг для блокировки выбора фильма
+
+        document.getElementById('searchInput').addEventListener('input', function () {
+            isSearchActive = true; // Пока вводим текст - выбор фильма заблокирован
+            filterMovies();
+        });
+
+        // Клик в любом месте экрана (кроме поиска) закрывает поиск и разблокирует выбор фильма
+        document.addEventListener('click', function (event) {
+            const searchInput = document.getElementById('searchInput');
+            const overlay = document.querySelector('.search-overlay');
+            const searchLabel = document.querySelector('.header-button[onclick="toggleSearch()"]');
+
+            // Если клик не по полю поиска и не по кнопке поиска
+            if (event.target !== searchInput && event.target !== searchLabel) {
+                searchInput.style.display = 'none';
+                overlay.classList.remove('active');
+                isSearchActive = false; // Разблокируем выбор фильма
+            }
+        });
+
+        // Фильтруем список фильмов по введённому запросу
+        function filterMovies() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const buttons = document.querySelectorAll('.add-movie-button');
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+
+            buttons.forEach(button => {
+                const movieName = button.textContent.trim().toLowerCase();
+                const movie = movies.find(m => m.name.trim().toLowerCase() === movieName);
+
+                if (movie && (movie.name.toLowerCase().includes(query) || movie.genre.toLowerCase().includes(query))) {
+                    button.style.display = 'block';
+                    button.disabled = true; // Блокируем клик по фильмам
+                } else {
+                    button.style.display = 'none';
+                }
+            });
+        }
+
+        // Разблокируем клик по фильмам после закрытия поиска
+        document.addEventListener('click', function () {
+            if (!isSearchActive) {
+                document.querySelectorAll('.add-movie-button').forEach(button => {
+                    button.disabled = false;
+                });
+            }
+        });
+
+        // Функция для открытия деталей фильма
+        function openMovieDetails(name, genre, url) {
+            document.querySelector('.add-movie-container').style.display = 'none';
+            document.querySelector('.header-container').style.display = 'none';
+
+            document.getElementById('modalMovieName').textContent = name;
+            document.getElementById('modalMovieGenre').textContent = `Жанр: ${genre}`;
+            document.getElementById('modalMovieUrl').href = url;
+            document.getElementById('movieModal').style.display = 'block';
+
+            // Находим индекс текущего фильма в локальном хранилище
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+            currentMovieIndex = movies.findIndex(m => m.name === name && m.genre === genre && m.url === url);
+        }
+
+        // Функция для открытия формы редактирования
+        function editMovie() {
+            if (currentMovieIndex === null) return;
+
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+            const movie = movies[currentMovieIndex];
+
+            document.getElementById('editMovieName').value = movie.name;
+            document.getElementById('editMovieGenre').value = movie.genre;
+            document.getElementById('editMovieUrl').value = movie.url;
+
+            document.getElementById('editMovieForm').style.display = 'flex';
+        }
+
+        // Функция для сохранения изменений
+        function saveMovieChanges() {
+            if (currentMovieIndex === null) return;
+
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+
+            movies[currentMovieIndex].name = document.getElementById('editMovieName').value.trim();
+            movies[currentMovieIndex].genre = document.getElementById('editMovieGenre').value.trim();
+            movies[currentMovieIndex].url = document.getElementById('editMovieUrl').value.trim();
+
+            localStorage.setItem('movies', JSON.stringify(movies));
+
+            // Обновляем модальное окно
+            document.getElementById('modalMovieName').textContent = movies[currentMovieIndex].name;
+            document.getElementById('modalMovieGenre').textContent = `Жанр: ${movies[currentMovieIndex].genre}`;
+            document.getElementById('modalMovieUrl').href = movies[currentMovieIndex].url;
+
+            // Обновляем список фильмов на главном экране
+            loadMovies();
+
+            document.getElementById('editMovieForm').style.display = 'none';
+        }
+
+        // Загрузка фильмов при старте страницы
+        function loadMovies() {
+            const movies = JSON.parse(localStorage.getItem('movies')) || [];
+            const container = document.getElementById('addMovieContainer');
+            container.innerHTML = '';
+
+            movies.forEach(movie => {
+                const newButton = document.createElement('button');
+                newButton.classList.add('add-movie-button');
+                newButton.textContent = movie.name;
+                newButton.onclick = () => openMovieDetails(movie.name, movie.genre, movie.url);
+                container.appendChild(newButton);
+            });
+        }
+
+        // Обновляем список фильмов при загрузке
+        window.onload = loadMovies;
+
+        let currentMovieIndex = null; // Индекс текущего фильма
+let isEditMode = false; // Флаг редактирования
+
+// Открываем модальное окно с фильмом
+function openMovieDetails(name, genre, url) {
+    document.querySelector('.add-movie-container').style.display = 'none';
+    document.querySelector('.header-container').style.display = 'none';
+
+    document.getElementById('modalMovieName').textContent = name;
+    document.getElementById('modalMovieGenre').textContent = `Жанр: ${genre}`;
+    document.getElementById('modalMovieUrl').href = url;
+
+    document.getElementById('movieModal').style.display = 'block';
+
+    document.getElementById('editMovieButton').style.display = 'inline-block';
+    document.getElementById('backButton').style.display = 'inline-block';
+
+    isEditMode = false;
+    document.getElementById('editMovieButton').textContent = "Редактировать";
+    document.getElementById('editMovieButton').classList.remove('save-button');
+
+    // Найти индекс фильма в localStorage
+    const movies = JSON.parse(localStorage.getItem('movies')) || [];
+    currentMovieIndex = movies.findIndex(m => m.name === name && m.genre === genre && m.url === url);
+
+    // Заполняем поля формы
+    document.getElementById('editMovieName').value = name;
+    document.getElementById('editMovieGenre').value = genre;
+    document.getElementById('editMovieUrl').value = url;
+
+    // Показываем детали фильма, скрываем форму редактирования
+    document.getElementById('movieDetails').style.display = 'block';
+    document.getElementById('editMovieForm').style.display = 'none';
+}
+
+// Включение режима редактирования
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    const editButton = document.getElementById('editMovieButton');
+
+    if (isEditMode) {
+        editButton.textContent = "Сохранить";
+        editButton.classList.add('save-button');
+
+        document.getElementById('movieDetails').style.display = 'none';
+        document.getElementById('editMovieForm').style.display = 'block';
+    } else {
+        saveMovieChanges();
+    }
+}
+
+// Сохранение изменений
+function saveMovieChanges() {
+    if (currentMovieIndex === null) return;
+
+    const movies = JSON.parse(localStorage.getItem('movies')) || [];
+
+    movies[currentMovieIndex].name = document.getElementById('editMovieName').value.trim();
+    movies[currentMovieIndex].genre = document.getElementById('editMovieGenre').value.trim();
+    movies[currentMovieIndex].url = document.getElementById('editMovieUrl').value.trim();
+
+    localStorage.setItem('movies', JSON.stringify(movies));
+
+    // Обновляем модальное окно
+    document.getElementById('modalMovieName').textContent = movies[currentMovieIndex].name;
+    document.getElementById('modalMovieGenre').textContent = `Жанр: ${movies[currentMovieIndex].genre}`;
+    document.getElementById('modalMovieUrl').href = movies[currentMovieIndex].url;
+
+    loadMovies(); // Перезагружаем список фильмов
+
+    // Выключаем режим редактирования
+    isEditMode = false;
+    document.getElementById('editMovieButton').textContent = "Редактировать";
+    document.getElementById('editMovieButton').classList.remove('save-button');
+
+    // Показываем блок с фильмом, скрываем форму
+    document.getElementById('movieDetails').style.display = 'block';
+    document.getElementById('editMovieForm').style.display = 'none';
+}
+
+// Кнопка "Назад" — возвращаемся к списку фильмов
+function goBack() {
+    document.getElementById('movieModal').style.display = 'none';
+    document.getElementById('formContainer').style.display = 'none'; // Скрываем форму добавления фильма
+    document.querySelector('.add-movie-container').style.display = 'flex';
+    document.querySelector('.header-container').style.display = 'flex';
+
+    document.getElementById('editMovieButton').style.display = 'none';
+    document.getElementById('backButton').style.display = 'none';
+}
+
+// Загружаем фильмы при старте
+function loadMovies() {
+    const movies = JSON.parse(localStorage.getItem('movies')) || [];
+    const container = document.getElementById('addMovieContainer');
+    container.innerHTML = '';
+
+    movies.forEach(movie => {
+        const newButton = document.createElement('button');
+        newButton.classList.add('add-movie-button');
+        newButton.textContent = movie.name;
+        newButton.onclick = () => openMovieDetails(movie.name, movie.genre, movie.url);
+        container.appendChild(newButton);
+    });
+}
+
+// Загрузка фильмов при старте страницы
+window.onload = loadMovies;
+
+    </script>
+</body>
+
+</html>
